@@ -1,0 +1,112 @@
+menu "CMeteo Configuration"
+
+    menu "WiFi Configuration"
+        config WIFI_SSID
+            string "WiFi SSID"
+            default "your_wifi_ssid"
+            help
+                SSID (network name) for the WiFi network to connect to.
+
+        config WIFI_PASSWORD
+            string "WiFi Password"
+            default "your_wifi_password"
+            help
+                WiFi password (WPA or WPA2) for the network.
+
+        config WIFI_H2E_IDENTIFIER
+            string "WiFi H2E Identifier"
+            default "123XYZ456ABC"
+            help
+                H2E identifier for WPA3 SAE authentication.
+                Also used as device_id for InfluxDB measurements.
+
+        config WIFI_MAXIMUM_RETRY
+            int "Maximum retry attempts"
+            default 5
+            help
+                Maximum number of retry attempts before giving up on WiFi connection.
+    endmenu
+
+    menu "InfluxDB Configuration"
+        config INFLUXDB_URL
+            string "InfluxDB Write URL"
+            default "https://influx.domain.com/api/v2/write?org=ORGNAME&bucket=BUCKETNAME&precision=s"
+            help
+                Full URL for InfluxDB write endpoint including org, bucket, and precision parameters.
+
+        config INFLUXDB_TOKEN
+            string "InfluxDB Authentication Token"
+            help
+                Authentication token for InfluxDB API access.
+                IMPORTANT: Keep this secret! Do not commit to version control.
+    endmenu
+
+    menu "BME280 Sensor Configuration"
+        config BME280_I2C_SCL_GPIO
+            int "I2C SCL GPIO Number"
+            default 22
+            range 0 39
+            help
+                GPIO number for I2C clock line (SCL).
+
+        config BME280_I2C_SDA_GPIO
+            int "I2C SDA GPIO Number"
+            default 21
+            range 0 39
+            help
+                GPIO number for I2C data line (SDA).
+
+        config BME280_OVERSAMPLING_TEMP
+            int "Temperature Oversampling"
+            default 5
+            range 0 5
+            help
+                Oversampling setting for temperature (0=skip, 1=x1, 2=x2, 3=x4, 4=x8, 5=x16).
+
+        config BME280_OVERSAMPLING_PRESS
+            int "Pressure Oversampling"
+            default 5
+            range 0 5
+            help
+                Oversampling setting for pressure (0=skip, 1=x1, 2=x2, 3=x4, 4=x8, 5=x16).
+
+        config BME280_OVERSAMPLING_HUM
+            int "Humidity Oversampling"
+            default 5
+            range 0 5
+            help
+                Oversampling setting for humidity (0=skip, 1=x1, 2=x2, 3=x4, 4=x8, 5=x16).
+
+        config BME280_ENABLE_IIR
+            bool "Enable IIR Filter"
+            default y
+            help
+                Enable the built-in IIR (Infinite Impulse Response) filter for smoother readings.
+    endmenu
+
+    menu "Hardware Configuration"
+        config LED_GPIO
+            int "LED GPIO Number"
+            default 2
+            range 0 39
+            help
+                GPIO number for the status LED.
+
+        config LED_BLINK_PERIOD_MS
+            int "LED Blink Period (ms)"
+            default 5000
+            range 100 60000
+            help
+                LED blink period when WiFi is connected (milliseconds).
+    endmenu
+
+    menu "Measurement Configuration"
+        config MEASUREMENT_INTERVAL_SEC
+            int "Measurement Interval (seconds)"
+            default 60
+            range 10 3600
+            help
+                Time interval between sensor readings and data transmissions (in seconds).
+    endmenu
+
+endmenu

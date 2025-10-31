@@ -463,6 +463,7 @@ static void wifi_init()
             .threshold.authmode = WIFI_AUTH_WPA2_PSK,
             .sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
             .sae_h2e_identifier = EXAMPLE_H2E_IDENTIFIER,
+            .channel = 0,
         },
     };
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -507,7 +508,8 @@ static void http_init()
         .url = INFLUXDB_URL,
         .method = HTTP_METHOD_POST,
         .crt_bundle_attach = &esp_crt_bundle_attach,
-        .skip_cert_common_name_check = false
+        .skip_cert_common_name_check = false,
+        .timeout_ms = 5000
     };
     client = esp_http_client_init(&config);
 }
@@ -530,21 +532,23 @@ static void send_http(esp_http_client_handle_t *client)
     char auth_header[256];
     snprintf(auth_header, sizeof(auth_header), "Token %s", INFLUXDB_TOKEN);
     esp_http_client_set_header(*client, "Authorization", auth_header);
-    esp_err_t err = esp_http_client_perform(*client);
-    if (err == ESP_OK) {
-        int status = esp_http_client_get_status_code(*client);
-        int len = esp_http_client_get_content_length(*client);
-        printf("Status = %d, len = %d\n", status, len);
-        char buffer[256];
-        int read_len = esp_http_client_read_response(*client, buffer, sizeof(buffer)-1);
-        if (read_len > 0) {
-            buffer[read_len] = 0;
-            printf("Response: %s\n", buffer);
+    for (uint8_t i=0; i<3; i++) {
+        esp_err_t err = esp_http_client_perform(*client);
+        if (err == ESP_OK) {
+            int status = esp_http_client_get_status_code(*client);
+            int len = esp_http_client_get_content_length(*client);
+            printf("Status = %d, len = %d\n\n", status, len);
+            char buffer[256];
+            int read_len = esp_http_client_read_response(*client, buffer, sizeof(buffer)-1);
+            if (read_len > 0) {
+                buffer[read_len] = 0;
+                printf("Response: %s\n", buffer);
+            }
+            return ;
+        } else {
+            printf("Retry: %d/3 HTTP POST failed: %s\n", i, esp_err_to_name(err));
         }
-    } else {
-        printf("HTTP POST failed: %s\n", esp_err_to_name(err));
     }
-
 }
 
 

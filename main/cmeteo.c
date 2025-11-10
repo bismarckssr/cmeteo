@@ -334,6 +334,7 @@ static esp_err_t bme280_write_reg_retry(i2c_master_dev_handle_t *dev_handle, uin
         vTaskDelay(20 / portTICK_PERIOD_MS);
     }
     ESP_LOGE(TAG_BME, "write reg 0x%02X failed after %d attempts", reg, retries);
+    esp_restart();
     return ESP_FAIL;
 }
 
@@ -348,6 +349,7 @@ static esp_err_t bme280_read_reg_retry(i2c_master_dev_handle_t *dev_handle, uint
         vTaskDelay(20 / portTICK_PERIOD_MS);
     }
     ESP_LOGE(TAG_BME, "read reg 0x%02X failed after %d attempts", reg_to_read, retries);
+    esp_restart();
     return ESP_FAIL;
 }
 
@@ -399,7 +401,8 @@ void bme280_init_defaults(i2c_master_dev_handle_t *dev_handle, uint8_t mode, boo
 
         for (int i = 0; i < 3; i++) { // N = coeff+1 per sicurezza
             uint8_t tmp[3];
-            i2c_master_transmit_receive(*dev_handle, &(uint8_t){0xF7}, 1, tmp, 3, I2C_MASTER_TIMEOUT_MS);
+            esp_err_t err = i2c_master_transmit_receive(*dev_handle, &(uint8_t){0xF7}, 1, tmp, 3, I2C_MASTER_TIMEOUT_MS);
+            if (err != ESP_OK) esp_restart();
             vTaskDelay(100 / portTICK_PERIOD_MS);
         }
     }
@@ -421,7 +424,9 @@ static void event_handler(void* arg, esp_event_base_t event_base,
             s_retry_num++;
             ESP_LOGI(TAG, "retry to connect to the AP");
         } else {
+            ESP_LOGE(TAG, "max retries reached, restarting device...");
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+            esp_restart();
         }
         ESP_LOGI(TAG,"connect to the AP fail");
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
